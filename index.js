@@ -187,6 +187,77 @@ async function run() {
         res.status(500).send({ message: "Internal server error" });
       }
     });
+    //---------dashboard route
+
+    // GET all job applications
+    app.get("/jobs", async (req, res) => {
+      try {
+        const result = await jobsCollection
+          .find()
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.status(200).send(result);
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+        res.status(500).send({ message: "Failed to fetch job applications" });
+      }
+    });
+    //----------Job Application Handle
+    const { ObjectId } = require("mongodb");
+
+    // 1. GET all job applications
+    app.get("/jobs", async (req, res) => {
+      try {
+        const result = await jobsCollection
+          .find()
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.status(200).send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Failed to fetch jobs" });
+      }
+    });
+
+    // 2. POST create a new job application
+    app.post("/jobs", async (req, res) => {
+      try {
+        const newJob = {
+          ...req.body,
+          createdAt: new Date(),
+        };
+        const result = await jobsCollection.insertOne(newJob);
+        res.status(201).send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Failed to create job application" });
+      }
+    });
+
+    // 3. PATCH update job status
+    app.patch("/jobs/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const { status } = req.body;
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = { $set: { status } };
+
+        const result = await jobsCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Failed to update status" });
+      }
+    });
+
+    // 4. DELETE job application
+    app.delete("/jobs/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await jobsCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Failed to delete job application" });
+      }
+    });
 
     // ================= JOBS ROUTES =================
     app.get("/jobs", async (req, res) => {
